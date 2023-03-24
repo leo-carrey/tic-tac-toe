@@ -1,7 +1,12 @@
-player = "O"
-game = True
-board = [" "]*9
-turn = 0
+import tkinter as tk
+
+game_dico = {
+    "player": 'X',
+    "game": True,
+    "board": [" "]*9,
+    "buttonList": []
+}
+
 WINCOND = [
     [0, 1, 2],
     [3, 4, 5],
@@ -14,69 +19,69 @@ WINCOND = [
 ]
 
 
-def printBoard(board):
-    print(f' {board[0]} | {board[1]} | {board[2]} ')
-    print("---|---|---")
-    print(f' {board[3]} | {board[4]} | {board[5]} ')
-    print("---|---|---")
-    print(f' {board[6]} | {board[7]} | {board[8]} ')
+def swap_player(game_dico, index):
+    if check_position(game_dico, index):
+        game_dico["board"][index] = game_dico["player"]
+        game_dico["buttonList"][index].config(text=game_dico["player"])
+        if game_dico["player"] == "O":
+            game_dico["player"] = "X"
+        else:
+            game_dico["player"] = "O"
 
 
-def tic_tac_toe(board):
-    global player
-    golemTier = 0
-    while True:  
-        try:
-            userinput = input("entrer votre position :")
-            if check_position(board, int(userinput)):
-                board[int(userinput) - 1] = player
-                break
-            else:
-                if golemTier > 0:
-                    print("change de case !!!")
-                else:
-                    print("La case est deja prise")
-                    golemTier += 1
-        except KeyboardInterrupt:
-            print("\nReviens quand tu veut")
-            exit()
-        except:
-            golemTier += 1
-            print("c'est pas un nombre")
-
-
-def swap_player():
-    global player
-    if player == "X":
-        player = "O"
-    else:
-        player = "X"
-
-
-def check_position(array, p):
-    if array[p-1] == " ":
-        return True
-    return False
-
-
-def checkwin(board):
+def win_condition(game_dico):
     for i in WINCOND:
-        if board[i[0]]==board[i[1]]==board[i[2]]!=' ':
-            return board[i[0]]
+        if game_dico["board"][i[0]] == game_dico["board"][i[1]] == game_dico["board"][i[2]] != " ":
+            return game_dico["board"][i[0]]
     return None
 
 
-def checkdraw(board):
-    return ' ' not in board
+def check_position(game_dico, index):
+    return game_dico["board"][index] == " "
 
 
-while game:
-    if checkwin(board):
-        print(f'Player {checkwin(board)} Wins!')
-        break
-    if checkdraw(board):
-        print('Draw!')
-        break
-    tic_tac_toe(board)
-    printBoard(board)
-    swap_player()
+def reset_game(game_dico, game_label):
+    game_dico["player"] = "X"
+    game_dico["game"] = True
+    game_dico["board"] = [" "]*9
+    game_label.config(text="Player X turn")
+    for button in game_dico["buttonList"]:
+        button.config(text=" ")
+
+
+def button_click(game_dico, game_label, index):
+    if game_dico["game"]:
+        if check_position(game_dico, index):
+            swap_player(game_dico, index)
+            winner = win_condition(game_dico)
+            text_player = game_dico["player"]
+            if winner:
+                game_label.config(text=f"Player {winner} wins!")
+                game_dico["game"] = False
+            elif " " not in game_dico["board"]:
+                game_label.config(text="Draw!")
+                game_dico["game"] = False
+            else:
+                game_label.config(text=f"Player {text_player} turn")
+
+
+window = tk.Tk()
+window.title("Tic Tac Toe")
+
+
+for i in range(9):
+    button = tk.Button(window, text=" ", width=10, height=5,
+                       command=lambda index=i: button_click(game_dico, game_label, index))
+    button.grid(row=i//3, column=i % 3)
+    game_dico["buttonList"].append(button)
+
+label_player = game_dico["player"]
+game_label = tk.Label(window, text=f"Player {label_player} turn")
+game_label.grid(row=3, column=0, columnspan=2)
+
+reset_button = tk.Button(window, text="Reset",
+                         command=lambda: reset_game(game_dico, game_label))
+reset_button.grid(row=3, column=2)
+
+
+window.mainloop()
